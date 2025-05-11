@@ -1,0 +1,73 @@
+syntax = "proto3";
+package hometask.ticketservice;
+
+service TicketService {
+    rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);
+    rpc GetEvents(GetEventsRequest) returns (GetEventsResponse);
+    rpc GetTickets(GetTicketsRequest) returns (GetTicketsResponse);
+    rpc ReserveTicket(ReserveTicketRequest) returns (ReserveTicketResponse);
+    rpc ConfirmReservation(ConfirmReservationRequest) returns (ConfirmReservationResponse);
+    rpc CancelReservation(CancelReservationRequest) returns (CancelReservationResponse);
+}
+message CreateEventRequest {
+    string name = 1;
+    string date_time = 2;
+    repeated string ticket_numbers = 3;
+}
+
+message CreateEventResponse {
+    string event_id = 1;
+}
+
+message GetEventsRequest {}
+
+message GetEventsResponse {
+    repeated Event events = 1;
+}
+
+message GetTicketsRequest {
+    string event_id = 1;
+    bool available_only = 2;
+}
+
+message GetTicketsResponse {
+    repeated Ticket tickets = 1;
+}
+
+message ReserveTicketRequest {
+    string user_id = 1;
+    string ticket_number = 2;
+}
+
+message ReserveTicketResponse {
+    string reservation_id = 1;
+}
+
+message ConfirmReservationRequest {
+    string reservation_id = 1;
+}
+
+message ConfirmReservationResponse {
+    bool success = 1;
+}
+
+message CancelReservationRequest {
+    string reservation_id = 1;
+}
+
+message CancelReservationResponse {
+    bool success = 1;
+}
+
+message Event {
+    string id = 1;
+    string name = 2;
+    string date_time = 3;
+}
+
+message Ticket {
+    string id = 1;
+    string number = 2;
+    bool is_reserved = 3;
+    bool is_confirmed = 4;
+}
