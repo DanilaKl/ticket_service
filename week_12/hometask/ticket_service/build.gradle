@@ -3,7 +3,8 @@ plugins {
 	id 'org.springframework.boot' version '3.4.5'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'com.google.protobuf' version '0.9.4'
-	id 'nu.studer.jooq' version '9.0'
+	id "org.jooq.jooq-codegen-gradle" version "3.19.21"
+	id 'org.liquibase.gradle' version '2.2.0'
 }
 
 group = 'hometask'
@@ -25,23 +26,28 @@ ext {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'net.devh:grpc-spring-boot-starter:3.0.0.RELEASE'
+	implementation 'org.springframework.grpc:spring-grpc-spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-jooq'
 
 	implementation 'io.grpc:grpc-protobuf:1.62.2'
 	implementation 'io.grpc:grpc-stub:1.62.2'
 	implementation 'io.grpc:grpc-netty:1.62.2'
 
-	implementation 'org.liquibase:liquibase-core'
+	liquibaseRuntime 'org.liquibase:liquibase-core:4.25.0'
+	liquibaseRuntime 'org.liquibase:liquibase-groovy-dsl:2.1.1'
+	liquibaseRuntime 'info.picocli:picocli:4.7.5'
+	liquibaseRuntime 'org.yaml:snakeyaml:2.0'
+	liquibaseRuntime 'org.postgresql:postgresql'
 
 	runtimeOnly 'org.postgresql:postgresql'
-	jooqGenerator 'org.postgresql:postgresql'
+	jooqCodegen 'org.postgresql:postgresql'
 
 	// Для генерации аннотаций
 	compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
+apply plugin: "org.liquibase.gradle"
 
 dependencyManagement {
 	imports {
@@ -60,41 +66,55 @@ protobuf {
 	}
 	generateProtoTasks {
 		all()*.plugins {
-			grpc {}
+			grpc {
+				option 'jakarta_omit'
+				option '@generated=omit'
+			}
 		}
 	}
 }
 
 jooq {
-	configurations {
-		main {
-			generationTool {
-				jdbc {
-					driver = 'org.postgresql.Driver'
-					url = 'jdbc:postgresql://localhost:5432/tickets'
-					user = 'ticket_user'
-					password = 'ticket_password'
-				}
-				generator {
-					name = 'org.jooq.codegen.DefaultGenerator'
-					database {
-						name = 'org.jooq.meta.postgres.PostgresDatabase'
-						inputSchema = 'public'
-					}
-					generate {
-						deprecated = false
-						records = true
-						immutablePojos = true
-						fluentSetters = true
-					}
-					target {
-						packageName = 'hometask.ticket_service.jooq'
-						directory = 'build/generated-src/jooq/main'
-					}
-				}
+	configuration {
+		jdbc {
+			driver = 'org.postgresql.Driver'
+			url = 'jdbc:postgresql://localhost:5432/tickets'
+			user = 'ticket_user'
+			password = 'ticket_password'
+		}
+		generator {
+			database {
+				name = "org.jooq.meta.postgres.PostgresDatabase"
+				inputSchema = 'public'
+			}
+			generate {
+				deprecated = false
+				records = true
+				immutablePojos = true
+				fluentSetters = true
+			}
+			target {
+				packageName = 'hometask.ticket_service.jooq'
+				directory = 'build/generated-src/jooq/main'
 			}
 		}
 	}
+}
+
+liquibase {
+	activities {
+		main {
+			changelogFile "src/main/resources/db/changelog/db.changelog-master.yaml"
+			url "jdbc:postgresql://localhost:5432/tickets"
+			username "ticket_user"
+			password "ticket_password"
+			driver 'org.postgresql.Driver'
+		}
+	}
+}
+
+tasks.named("compileJava") {
+	dependsOn(tasks.named("jooqCodegen"))
 }
 
 tasks.named('test') {
