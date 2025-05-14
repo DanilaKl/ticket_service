@@ -113,6 +113,10 @@ liquibase {
 	}
 }
 
+tasks.named("jooqCodegen") {
+	dependsOn(tasks.named("update"))
+}
+
 tasks.named("compileJava") {
 	dependsOn(tasks.named("jooqCodegen"))
 }
