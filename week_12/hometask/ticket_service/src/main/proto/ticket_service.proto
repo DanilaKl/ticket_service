@@ -5,6 +5,7 @@ service TicketService {
     rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);
     rpc GetEvents(GetEventsRequest) returns (GetEventsResponse);
     rpc GetTickets(GetTicketsRequest) returns (GetTicketsResponse);
+    rpc GetUserTickets(GetUserTicketsRequest) returns (GetTicketsResponse);
     rpc ReserveTicket(TicketActionRequest) returns (TicketActionResponse);
     rpc ConfirmReservation(TicketActionRequest) returns (TicketActionResponse);
     rpc CancelReservation(TicketActionRequest) returns (TicketActionResponse);
@@ -30,6 +31,10 @@ message GetTicketsRequest {
     bool available_only = 2;
 }
 
+message GetUserTicketsRequest {
+    string user_id = 1;
+}
+
 message GetTicketsResponse {
     repeated Ticket tickets = 1;
 }
@@ -52,6 +57,7 @@ message Event {
 
 message Ticket {
     string number = 1;
-    bool is_reserved = 2;
-    bool is_confirmed = 3;
+    int64 event_id = 2;
+    bool is_reserved = 3;
+    bool is_confirmed = 4;
 }

@@ -27,8 +27,21 @@ public class TicketRepository {
     }
 
     public List<TicketsRecord> getEventTickets(Long eventId, boolean isReserved) {
+        var reservationCondition = TICKETS.IS_RESERVED.eq(isReserved);
+        if (!isReserved) {
+            reservationCondition.or(TICKETS.RESERVATION_DATE.lt(LocalDateTime.now()));
+        } else {
+            reservationCondition.and(TICKETS.RESERVATION_DATE.ge(LocalDateTime.now()));
+        }
+
         return dslContext.selectFrom(TICKETS)
-                .where(TICKETS.EVENT_ID.eq(eventId).and(TICKETS.IS_RESERVED.eq(isReserved)))
+                .where(TICKETS.EVENT_ID.eq(eventId).and(reservationCondition))
+                .fetchInto(TicketsRecord.class);
+    }
+
+    public List<TicketsRecord> getUserTickets(String user) {
+        return dslContext.selectFrom(TICKETS)
+                .where(TICKETS.USER_ID.eq(UUID.fromString(user)))
                 .fetchInto(TicketsRecord.class);
     }
 
