@@ -233,7 +233,10 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
                 .map(ticket -> TicketServiceOuterClass.Ticket.newBuilder()
                         .setNumber(ticket.getNumber())
                         .setEventId(ticket.getEventId())
-                        .setIsReserved(ticket.getIsReserved())
+                        .setIsReserved(
+                                ticket.getIsReserved()
+                                && LocalDateTime.now().isBefore(ticket.getReservationDate())
+                        )
                         .setIsConfirmed(ticket.getIsConfirmed())
                         .build()
                 ).iterator();

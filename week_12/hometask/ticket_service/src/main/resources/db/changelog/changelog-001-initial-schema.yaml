@@ -49,3 +49,8 @@ databaseChangeLog:
             uniqueConstraints:
               - columnNames: event_id, number
                 constraintName: tickets_number_event_id_pk
+      rollback:
+        - dropTable:
+            tableName: events
+        - dropTable:
+            tableName: tickets

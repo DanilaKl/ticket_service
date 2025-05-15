@@ -1,10 +1,19 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath "org.liquibase:liquibase-core:4.31.1"
+	}
+}
+
 plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.5'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'com.google.protobuf' version '0.9.4'
 	id "org.jooq.jooq-codegen-gradle" version "3.19.21"
-	id 'org.liquibase.gradle' version '2.2.0'
+	id "org.liquibase.gradle" version "3.0.2"
 }
 
 group = 'hometask'
@@ -22,6 +31,11 @@ repositories {
 
 ext {
 	set('springGrpcVersion', "0.8.0")
+	set('testcontainers.version', "1.21.0")
+	dbUrl = 'jdbc:postgresql://localhost:5432/tickets'
+	dbUser = 'ticket_user'
+	dbPassword = 'ticket_password'
+	dbDriver = 'org.postgresql.Driver'
 }
 
 dependencies {
@@ -33,21 +47,24 @@ dependencies {
 	implementation 'io.grpc:grpc-stub:1.62.2'
 	implementation 'io.grpc:grpc-netty:1.62.2'
 
-	liquibaseRuntime 'org.liquibase:liquibase-core:4.25.0'
-	liquibaseRuntime 'org.liquibase:liquibase-groovy-dsl:2.1.1'
-	liquibaseRuntime 'info.picocli:picocli:4.7.5'
-	liquibaseRuntime 'org.yaml:snakeyaml:2.0'
-	liquibaseRuntime 'org.postgresql:postgresql'
+	liquibaseRuntime 'org.liquibase:liquibase-core:4.31.1'
+	liquibaseRuntime 'org.liquibase:liquibase-groovy-dsl:4.0.1'
+	liquibaseRuntime 'info.picocli:picocli:4.7.7'
+	liquibaseRuntime 'org.postgresql:postgresql:42.7.5'
 
-	runtimeOnly 'org.postgresql:postgresql'
-	jooqCodegen 'org.postgresql:postgresql'
+	runtimeOnly 'org.postgresql:postgresql:42.7.3'
 
-	// Для генерации аннотаций
+	jooqCodegen 'org.postgresql:postgresql:42.7.3'
+
 	compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
+	testImplementation 'org.liquibase:liquibase-core:4.31.1'
 }
-apply plugin: "org.liquibase.gradle"
 
 dependencyManagement {
 	imports {
@@ -77,10 +94,10 @@ protobuf {
 jooq {
 	configuration {
 		jdbc {
-			driver = 'org.postgresql.Driver'
-			url = 'jdbc:postgresql://localhost:5432/tickets'
-			user = 'ticket_user'
-			password = 'ticket_password'
+			driver = dbDriver
+			url = dbUrl
+			user = dbUser
+			password = dbPassword
 		}
 		generator {
 			database {
@@ -103,12 +120,13 @@ jooq {
 
 liquibase {
 	activities {
-		main {
-			changelogFile "src/main/resources/db/changelog/db.changelog-master.yaml"
-			url "jdbc:postgresql://localhost:5432/tickets"
-			username "ticket_user"
-			password "ticket_password"
-			driver 'org.postgresql.Driver'
+		build {
+			changelogFile "db/changelog/db.changelog-master.yaml"
+			searchPath "src/main/resources/"
+			url dbUrl
+			username dbUser
+			password dbPassword
+			driver dbDriver
 		}
 	}
 }

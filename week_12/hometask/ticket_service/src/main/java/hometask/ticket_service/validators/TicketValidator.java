@@ -13,9 +13,7 @@ public class TicketValidator {
     public void validateTicketReserve(TicketsRecord ticketRecord) {
         validateTicketObjectNotNull(ticketRecord);
 
-        if ((ticketRecord.getReservationDate() != null
-                    && LocalDateTime.now().isBefore(ticketRecord.getReservationDate()))
-                || ticketRecord.getIsReserved()) {
+        if (ticketRecord.getIsReserved() && LocalDateTime.now().isBefore(ticketRecord.getReservationDate())) {
             throw new IllegalStateException("Ticket already reserved");
         }
     }
