@@ -1,9 +1,15 @@
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.DockerClientFactory
+
 buildscript {
 	repositories {
 		mavenCentral()
 	}
 	dependencies {
 		classpath "org.liquibase:liquibase-core:4.31.1"
+		classpath 'org.testcontainers:testcontainers:1.19.4'
+		classpath 'org.testcontainers:postgresql:1.19.4'
+		classpath 'org.postgresql:postgresql:42.7.3'
 	}
 }
 
@@ -32,7 +38,8 @@ repositories {
 ext {
 	set('springGrpcVersion', "0.8.0")
 	set('testcontainers.version', "1.21.0")
-	dbUrl = 'jdbc:postgresql://localhost:5432/tickets'
+	dbName = 'tickets'
+	dbUrl = "jdbc:postgresql://localhost:5432/${dbName}"
 	dbUser = 'ticket_user'
 	dbPassword = 'ticket_password'
 	dbDriver = 'org.postgresql.Driver'
@@ -55,6 +62,7 @@ dependencies {
 	runtimeOnly 'org.postgresql:postgresql:42.7.3'
 
 	jooqCodegen 'org.postgresql:postgresql:42.7.3'
+	jooqCodegen "org.jooq:jooq-meta-extensions-liquibase:3.20.4"
 
 	compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 
@@ -134,14 +142,35 @@ liquibase {
 	}
 }
 
+tasks.register('postgresContainer') {
+	System.setProperty("docker.host", "tcp://localhost:2375")
+
+	var instance = new PostgreSQLContainer("postgres:latest")
+		.withDatabaseName(dbName)
+		.withUsername(dbUser)
+		.withPassword(dbPassword)
+
+	instance.start()
+	ext.dbUrl = instance.getJdbcUrl()
+	ext.instance = instance
+}
+
 tasks.named("jooqCodegen") {
-	dependsOn(tasks.named("update"))
+	dependsOn tasks.named('postgresContainer')
+	dbUrl = postgresContainer.dbUrl
+	dependsOn tasks.named('update')
+
+	doLast {
+		postgresContainer.instance.stop()
+	}
 }
 
 tasks.named("compileJava") {
+	dependsOn tasks.named("jooqCodegen")
 }
 
 tasks.named('test') {
+	systemProperty "testcontainers.debug", "true"
 	useJUnitPlatform()
 }
 
