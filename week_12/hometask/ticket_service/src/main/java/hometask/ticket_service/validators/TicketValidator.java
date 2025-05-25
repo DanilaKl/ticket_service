@@ -18,13 +18,30 @@ public class TicketValidator {
         }
     }
 
-    public void validateTicketConfirmCancel(TicketActionRequest ticketRequest, TicketsRecord ticketRecord) {
+    public void validateTicketConfirm(TicketActionRequest ticketRequest, TicketsRecord ticketRecord) {
         validateTicketObjectNotNull(ticketRecord);
 
         if (!UUID.fromString(ticketRequest.getUserId()).equals(ticketRecord.getUserId())
                 || !ticketRecord.getIsReserved()
         ) {
             throw new IllegalStateException("Ticket already reserved");
+        }
+    }
+
+    public void validateTicketCancel(TicketActionRequest ticketRequest, TicketsRecord ticketRecord) {
+        validateTicketObjectNotNull(ticketRecord);
+
+        if (!UUID.fromString(ticketRequest.getUserId()).equals(ticketRecord.getUserId())
+        ) {
+            throw new IllegalStateException("You don't own the ticket");
+        }
+
+        if (!ticketRecord.getIsReserved()) {
+            throw new IllegalStateException("The ticket is not reserved");
+        }
+
+        if (ticketRecord.getIsConfirmed()) {
+            throw new IllegalStateException("You can't cancel a confirmed ticket.");
         }
     }
 

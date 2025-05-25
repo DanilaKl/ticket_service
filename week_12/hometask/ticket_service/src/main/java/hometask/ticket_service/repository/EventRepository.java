@@ -3,6 +3,7 @@ package hometask.ticket_service.repository;
 import hometask.ticket_service.jooq.tables.records.EventsRecord;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;

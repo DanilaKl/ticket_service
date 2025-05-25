@@ -1,6 +1,6 @@
 package hometask.ticket_service.services;
 
-import hometask.ticket_service.AppConfiguration;
+import hometask.ticket_service.configuration.AppConfiguration;
 import hometask.ticket_service.jooq.tables.records.TicketsRecord;
 import hometask.ticket_service.repository.EventRepository;
 import hometask.ticket_service.repository.TicketRepository;
@@ -19,6 +19,7 @@ import hometask.ticketservice.TicketServiceOuterClass.TicketActionResponse;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.grpc.server.service.GrpcService;
 
 import java.time.LocalDateTime;
@@ -168,7 +169,7 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
         TicketsRecord ticketsRecord = ticketRepository.getTicket(request.getTicketNumber(), request.getEventId());
 
         try {
-            ticketValidator.validateTicketConfirmCancel(request, ticketsRecord);
+            ticketValidator.validateTicketConfirm(request, ticketsRecord);
         } catch (RuntimeException exception) {
             handleException(exception, responseObserver);
             return;
@@ -194,7 +195,7 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
         TicketsRecord ticketsRecord = ticketRepository.getTicket(request.getTicketNumber(), request.getEventId());
 
         try {
-            ticketValidator.validateTicketConfirmCancel(request, ticketsRecord);
+            ticketValidator.validateTicketCancel(request, ticketsRecord);
         } catch (RuntimeException exception) {
             handleException(exception, responseObserver);
             return;
@@ -221,6 +222,9 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
         }
         else if (exception instanceof IllegalStateException) {
             status = Status.INVALID_ARGUMENT.augmentDescription(exception.getMessage());
+        }
+        else if (exception instanceof OptimisticLockingFailureException) {
+            status = Status.INTERNAL.augmentDescription("Retry you request");
         }
 
         responseObserver.onError(status.asException());

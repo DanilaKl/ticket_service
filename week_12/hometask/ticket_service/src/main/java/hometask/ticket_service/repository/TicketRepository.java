@@ -2,9 +2,17 @@ package hometask.ticket_service.repository;
 
 import hometask.ticket_service.jooq.tables.records.TicketsRecord;
 import org.jooq.DSLContext;
+import org.jooq.Records;
+import org.jooq.SQLDialect;
+import org.jooq.conf.Settings;
+import org.jooq.impl.DSL;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -16,8 +24,10 @@ public class TicketRepository {
     private final DSLContext dslContext;
 
     @Autowired
-    public TicketRepository(DSLContext dslContext) {
-        this.dslContext = dslContext;
+    public TicketRepository(DataSource dataSource) {
+        this.dslContext = DSL.using(dataSource,
+                SQLDialect.POSTGRES,
+                new Settings().withExecuteWithOptimisticLocking(true));
     }
 
     public List<TicketsRecord> getAllEventTickets(Long eventId) {
@@ -60,29 +70,60 @@ public class TicketRepository {
     }
 
     public String updateEventTicket(String ticketNumber, Long eventId, String user,
-                                    Boolean idReserved, Boolean isConfirmed, LocalDateTime reservationTime) {
-        return dslContext.update(TICKETS)
-                .set(TICKETS.USER_ID, UUID.fromString(user))
-                .set(TICKETS.IS_RESERVED, idReserved)
-                .set(TICKETS.IS_CONFIRMED, isConfirmed)
-                .set(TICKETS.RESERVATION_DATE, reservationTime)
-                .where(TICKETS.NUMBER.eq(ticketNumber)
-                        .and(TICKETS.EVENT_ID.eq(eventId))
-                ).returningResult(TICKETS.NUMBER)
-                .fetchOne().getValue(TICKETS.NUMBER);
+                                    Boolean isReserved, Boolean isConfirmed, LocalDateTime reservationTime) {
+        TicketsRecord updateTicket = dslContext.fetchOne(TICKETS,
+                TICKETS.NUMBER.eq(ticketNumber).and(TICKETS.EVENT_ID.eq(eventId)));
+
+        if (updateTicket != null) {
+            String updatedNumber = dslContext.update(TICKETS)
+                    .set(TICKETS.USER_ID, UUID.fromString(user))
+                    .set(TICKETS.IS_RESERVED, isReserved)
+                    .set(TICKETS.IS_CONFIRMED, isConfirmed)
+                    .set(TICKETS.RESERVATION_DATE, reservationTime)
+                    .set(TICKETS.VERSION, updateTicket.getVersion() + 1)
+                    .where(TICKETS.NUMBER.eq(ticketNumber)
+                            .and(TICKETS.EVENT_ID.eq(eventId))
+                            .and(TICKETS.VERSION.eq(updateTicket.getVersion()))
+                    ).returningResult(TICKETS.NUMBER)
+                    .fetchOne(Records.mapping(value -> value));
+
+            if (updatedNumber == null) {
+                throw new OptimisticLockingFailureException("Record was modified by another transaction");
+            }
+
+            return updatedNumber;
+        }
+
+        return null;
     }
 
     public String updateUserTicket(String ticketNumber, Long eventId, String user,
-                                 Boolean idReserved, Boolean isConfirmed) {
-        return dslContext.update(TICKETS)
-                .set(TICKETS.IS_CONFIRMED, true)
-                .set(TICKETS.IS_RESERVED, idReserved)
-                .set(TICKETS.IS_CONFIRMED, isConfirmed)
-                .where(TICKETS.NUMBER.eq(ticketNumber)
+                                 Boolean isReserved, Boolean isConfirmed) {
+        TicketsRecord updateTicket = dslContext.fetchOne(TICKETS,
+                TICKETS.NUMBER.eq(ticketNumber)
                         .and(TICKETS.EVENT_ID.eq(eventId))
-                        .and(TICKETS.USER_ID.eq(UUID.fromString(user))))
-                .returningResult(TICKETS.NUMBER)
-                .fetchOne().getValue(TICKETS.NUMBER);
+                        .and(TICKETS.USER_ID.eq(UUID.fromString(user))));
+
+        if (updateTicket != null) {
+            String updatedNumber = dslContext.update(TICKETS)
+                    .set(TICKETS.IS_RESERVED, isReserved)
+                    .set(TICKETS.IS_CONFIRMED, isConfirmed)
+                    .set(TICKETS.VERSION, updateTicket.getVersion() + 1)
+                    .where(TICKETS.NUMBER.eq(ticketNumber)
+                            .and(TICKETS.EVENT_ID.eq(eventId))
+                            .and(TICKETS.USER_ID.eq(UUID.fromString(user)))
+                            .and(TICKETS.VERSION.eq(updateTicket.getVersion()))
+                    ).returningResult(TICKETS.NUMBER)
+                    .fetchOne(Records.mapping(value -> value));
+
+            if (updatedNumber == null) {
+                throw new OptimisticLockingFailureException("Record was modified by another transaction");
+            }
+
+            return updatedNumber;
+        }
+
+        return null;
     }
 
 

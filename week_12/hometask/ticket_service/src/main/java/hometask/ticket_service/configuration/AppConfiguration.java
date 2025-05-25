@@ -1,4 +1,4 @@
-package hometask.ticket_service;
+package hometask.ticket_service.configuration;
 
 
 import org.springframework.boot.context.properties.ConfigurationProperties;

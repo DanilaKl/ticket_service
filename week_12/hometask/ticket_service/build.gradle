@@ -40,12 +40,12 @@ ext {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.grpc:spring-grpc-spring-boot-starter'
+	implementation 'org.springframework.grpc:spring-grpc-spring-boot-starter:0.8.0'
 	implementation 'org.springframework.boot:spring-boot-starter-jooq'
 
-	implementation 'io.grpc:grpc-protobuf:1.62.2'
-	implementation 'io.grpc:grpc-stub:1.62.2'
-	implementation 'io.grpc:grpc-netty:1.62.2'
+	implementation 'io.grpc:grpc-protobuf'
+	implementation 'io.grpc:grpc-stub'
+	implementation 'io.grpc:grpc-netty'
 
 	liquibaseRuntime 'org.liquibase:liquibase-core:4.31.1'
 	liquibaseRuntime 'org.liquibase:liquibase-groovy-dsl:4.0.1'
@@ -60,6 +60,8 @@ dependencies {
 
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	testImplementation "io.grpc:grpc-testing"
 
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:postgresql'
@@ -103,6 +105,7 @@ jooq {
 			database {
 				name = "org.jooq.meta.postgres.PostgresDatabase"
 				inputSchema = 'public'
+				recordVersionFields = "version"
 			}
 			generate {
 				deprecated = false
@@ -136,9 +139,11 @@ tasks.named("jooqCodegen") {
 }
 
 tasks.named("compileJava") {
-	dependsOn(tasks.named("jooqCodegen"))
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+update.onlyIf {!gradle.startParameter.taskNames.any {it == 'test'}}
+jooqCodegen.onlyIf { !gradle.startParameter.taskNames.any { it == 'test' } }
