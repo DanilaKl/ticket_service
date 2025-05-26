@@ -1,178 +1,224 @@
 import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.DockerClientFactory
 
-buildscript {
+	buildscript {
+		repositories {
+			mavenCentral()
+		}
+		dependencies {
+			classpath "org.liquibase:liquibase-core:4.31.1"
+			classpath 'org.postgresql:postgresql:42.7.3'
+			classpath "org.testcontainers:testcontainers:1.21.0"
+			classpath "org.testcontainers:postgresql:1.21.0"
+		}
+	}
+
+	plugins {
+		id 'java'
+		id 'org.springframework.boot' version '3.4.5'
+		id 'io.spring.dependency-management' version '1.1.7'
+		id 'com.google.protobuf' version '0.9.4'
+		id "org.jooq.jooq-codegen-gradle" version "3.19.21"
+		id "org.liquibase.gradle" version "3.0.2"
+	}
+
+	group = 'hometask'
+	version = '0.0.1-SNAPSHOT'
+
+	java {
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(21)
+		}
+	}
+
 	repositories {
 		mavenCentral()
 	}
+
+	ext {
+		set('springGrpcVersion', "0.8.0")
+		set('testcontainers.version', "1.21.0")
+		dbName = 'tickets'
+		dbUser = 'ticket_user'
+		dbPassword = 'ticket_password'
+		dbDriver = 'org.postgresql.Driver'
+	}
+
+	def containerInstance = null
+
+	def getDbUrl = {
+		if (containerInstance) {
+			return containerInstance.getJdbcUrl()
+		}
+		return 'jdbc:postgresql://localhost:5432/' + dbName
+	}
+
 	dependencies {
-		classpath "org.liquibase:liquibase-core:4.31.1"
-		classpath 'org.testcontainers:testcontainers:1.19.4'
-		classpath 'org.testcontainers:postgresql:1.19.4'
-		classpath 'org.postgresql:postgresql:42.7.3'
+		implementation 'org.springframework.boot:spring-boot-starter-web'
+		implementation 'org.springframework.grpc:spring-grpc-spring-boot-starter:0.8.0'
+		implementation 'org.springframework.boot:spring-boot-starter-jooq'
+
+		implementation 'io.grpc:grpc-protobuf'
+		implementation 'io.grpc:grpc-stub'
+		implementation 'io.grpc:grpc-netty'
+
+		liquibaseRuntime 'org.liquibase:liquibase-core:4.31.1'
+		liquibaseRuntime 'org.liquibase:liquibase-groovy-dsl:4.0.1'
+		liquibaseRuntime 'info.picocli:picocli:4.7.7'
+		liquibaseRuntime 'org.postgresql:postgresql:42.7.5'
+
+		runtimeOnly 'org.postgresql:postgresql:42.7.3'
+
+		jooqCodegen 'org.postgresql:postgresql:42.7.3'
+		jooqCodegen "org.jooq:jooq-meta-extensions-liquibase:3.20.4"
+
+		compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
+
+
+		testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+		testImplementation "io.grpc:grpc-testing"
+
+		testImplementation 'org.testcontainers:junit-jupiter'
+		testImplementation 'org.testcontainers:postgresql'
+		testImplementation 'org.liquibase:liquibase-core:4.31.1'
+
+		testImplementation 'javax.annotation:javax.annotation-api:1.3.2'
 	}
-}
 
-plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.4.5'
-	id 'io.spring.dependency-management' version '1.1.7'
-	id 'com.google.protobuf' version '0.9.4'
-	id "org.jooq.jooq-codegen-gradle" version "3.19.21"
-	id "org.liquibase.gradle" version "3.0.2"
-}
-
-group = 'hometask'
-version = '0.0.1-SNAPSHOT'
-
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
-}
-
-repositories {
-	mavenCentral()
-}
-
-ext {
-	set('springGrpcVersion', "0.8.0")
-	set('testcontainers.version', "1.21.0")
-	dbName = 'tickets'
-	dbUrl = "jdbc:postgresql://localhost:5432/${dbName}"
-	dbUser = 'ticket_user'
-	dbPassword = 'ticket_password'
-	dbDriver = 'org.postgresql.Driver'
-}
-
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.grpc:spring-grpc-spring-boot-starter:0.8.0'
-	implementation 'org.springframework.boot:spring-boot-starter-jooq'
-
-	implementation 'io.grpc:grpc-protobuf'
-	implementation 'io.grpc:grpc-stub'
-	implementation 'io.grpc:grpc-netty'
-
-	liquibaseRuntime 'org.liquibase:liquibase-core:4.31.1'
-	liquibaseRuntime 'org.liquibase:liquibase-groovy-dsl:4.0.1'
-	liquibaseRuntime 'info.picocli:picocli:4.7.7'
-	liquibaseRuntime 'org.postgresql:postgresql:42.7.5'
-
-	runtimeOnly 'org.postgresql:postgresql:42.7.3'
-
-	jooqCodegen 'org.postgresql:postgresql:42.7.3'
-	jooqCodegen "org.jooq:jooq-meta-extensions-liquibase:3.20.4"
-
-	compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
-
-
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
-	testImplementation "io.grpc:grpc-testing"
-
-	testImplementation 'org.testcontainers:junit-jupiter'
-	testImplementation 'org.testcontainers:postgresql'
-	testImplementation 'org.liquibase:liquibase-core:4.31.1'
-}
-
-dependencyManagement {
-	imports {
-		mavenBom "org.springframework.grpc:spring-grpc-dependencies:${springGrpcVersion}"
-	}
-}
-
-protobuf {
-	protoc {
-		artifact = 'com.google.protobuf:protoc:3.25.1'
-	}
-	plugins {
-		grpc {
-			artifact = 'io.grpc:protoc-gen-grpc-java:1.62.2'
+	dependencyManagement {
+		imports {
+			mavenBom "org.springframework.grpc:spring-grpc-dependencies:${springGrpcVersion}"
 		}
 	}
-	generateProtoTasks {
-		all()*.plugins {
+
+	sourceSets {
+		main {
+			java {
+				srcDirs 'build/generated/source/proto/main/grpc'
+				srcDirs 'build/generated/source/proto/main/java'
+				srcDirs 'build/generated-src/jooq/main'
+			}
+		}
+		test {
+			java {
+				srcDirs 'build/generated/source/proto/main/grpc'
+				srcDirs 'build/generated/source/proto/main/java'
+				srcDirs 'build/generated-src/jooq/main'
+			}
+		}
+	}
+
+	protobuf {
+		protoc {
+			artifact = 'com.google.protobuf:protoc:3.25.1'
+		}
+		plugins {
 			grpc {
-				option 'jakarta_omit'
-				option '@generated=omit'
+				artifact = 'io.grpc:protoc-gen-grpc-java:1.62.2'
+			}
+		}
+		generateProtoTasks {
+			all()*.plugins {
+				grpc {
+					option 'jakarta_omit'
+					option '@generated=omit'
+				}
 			}
 		}
 	}
-}
 
-jooq {
-	configuration {
-		jdbc {
-			driver = dbDriver
-			url = dbUrl
-			user = dbUser
-			password = dbPassword
+	jooq {
+		executions {
+			create("dbCreds") {
+				delayedConfiguration {
+					jdbc {
+						driver = dbDriver
+						url = getDbUrl()
+						user = dbUser
+						password = dbPassword
+					}
+					generator {
+						database {
+							name = "org.jooq.meta.postgres.PostgresDatabase"
+							inputSchema = 'public'
+							recordVersionFields = "version"
+						}
+						generate {
+							deprecated = false
+							records = true
+							immutablePojos = true
+							fluentSetters = true
+						}
+						target {
+							packageName = 'hometask.ticket_service.jooq'
+							directory = 'build/generated-src/jooq/main'
+						}
+					}
+				}
+			}
 		}
-		generator {
-			database {
-				name = "org.jooq.meta.postgres.PostgresDatabase"
-				inputSchema = 'public'
-				recordVersionFields = "version"
-			}
-			generate {
-				deprecated = false
-				records = true
-				immutablePojos = true
-				fluentSetters = true
-			}
-			target {
-				packageName = 'hometask.ticket_service.jooq'
-				directory = 'build/generated-src/jooq/main'
+	}
+
+	liquibase {
+		activities {
+			register("dbCreds") {
+				changelogFile "db/changelog/db.changelog-master.yaml"
+				searchPath "src/main/resources/"
+				url getDbUrl()
+				username dbUser
+				password dbPassword
+				driver dbDriver
 			}
 		}
 	}
-}
 
-liquibase {
-	activities {
-		build {
-			changelogFile "db/changelog/db.changelog-master.yaml"
-			searchPath "src/main/resources/"
-			url dbUrl
-			username dbUser
-			password dbPassword
-			driver dbDriver
+	tasks.register('startPostgresContainer') {
+		doFirst {
+			logger.info "[startPostgresContainer] Starting PostgreSQLContainer..."
+			containerInstance = new PostgreSQLContainer("postgres:latest")
+					.withDatabaseName(dbName)
+					.withUsername(dbUser)
+					.withPassword(dbPassword)
+			containerInstance.start()
+			logger.info "[startPostgresContainer] Started on: ${containerInstance.getJdbcUrl()}"
+
+			var url = containerInstance.getJdbcUrl()
+			project.liquibase.activities["dbCreds"].arguments["url"] = url
+			project.jooq.executions.named("dbCreds").get().configuration.jdbc.url = url
 		}
 	}
-}
 
-tasks.register('postgresContainer') {
-	System.setProperty("docker.host", "tcp://localhost:2375")
-
-	var instance = new PostgreSQLContainer("postgres:latest")
-		.withDatabaseName(dbName)
-		.withUsername(dbUser)
-		.withPassword(dbPassword)
-
-	instance.start()
-	ext.dbUrl = instance.getJdbcUrl()
-	ext.instance = instance
-}
-
-tasks.named("jooqCodegen") {
-	dependsOn tasks.named('postgresContainer')
-	dbUrl = postgresContainer.dbUrl
-	dependsOn tasks.named('update')
-
-	doLast {
-		postgresContainer.instance.stop()
+	tasks.register('stopPostgresContainer') {
+		doLast {
+			if (containerInstance) {
+				println "[stopPostgresContainer] Stopping PostgreSQLContainer..."
+				containerInstance.stop()
+				containerInstance = null
+			}
+		}
 	}
-}
 
-tasks.named("compileJava") {
-	dependsOn tasks.named("jooqCodegen")
-}
+	tasks.named("update") {
+		dependsOn startPostgresContainer
+		doFirst {
+			logger.info "[update] Using database URL: ${getDbUrl()}"
+		}
+	}
+
+	tasks.named("jooqCodegen") {
+		dependsOn startPostgresContainer, update
+		mustRunAfter startPostgresContainer, update
+		doFirst {
+			logger.info "[jooqCodegen] Using database URL: ${getDbUrl()}"
+		}
+
+		finalizedBy 'stopPostgresContainer'
+	}
+
+	tasks.named("compileJava") {
+		dependsOn jooqCodegen
+	}
 
 tasks.named('test') {
-	systemProperty "testcontainers.debug", "true"
 	useJUnitPlatform()
 }
-
-update.onlyIf {!gradle.startParameter.taskNames.any {it == 'test'}}
-jooqCodegen.onlyIf { !gradle.startParameter.taskNames.any { it == 'test' } }
