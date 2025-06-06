@@ -35,6 +35,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -122,7 +123,7 @@ class TicketServiceApplicationTests {
 
 	@Test
 	void testGetEventsAndTickets() {
-		long eventId = createTestEvent("Football", List.of("B1", "B2"), "2025-06-01T18:00:00");
+		long eventId = createTestEvent("Football", List.of("B1", "B2"), OffsetDateTime.now().plusDays(20));
 
 		GetEventsResponse eventsResponse = stub.getEvents(GetEventsRequest.newBuilder().build());
 		assertEquals(1, eventsResponse.getEventsList().size());
@@ -138,7 +139,7 @@ class TicketServiceApplicationTests {
 	@Test
 	void testSuccessfulReserveAndConfirm() {
 		String ticketNumber = "C1";
-		long eventId = createTestEvent("Movie", List.of(ticketNumber), "2025-06-01T18:00:00");
+		long eventId = createTestEvent("Movie", List.of(ticketNumber), OffsetDateTime.now().plusDays(20));
 		String userId = UUID.randomUUID().toString();
 
 		var reserveResp = stub.reserveTicket(TicketActionRequest.newBuilder()
@@ -161,7 +162,7 @@ class TicketServiceApplicationTests {
 	@Test
 	void testSuccessfulReserveAndCancel() {
 		String ticketNumber = "C1";
-		long eventId = createTestEvent("Movie", List.of(ticketNumber), "2025-06-01T18:00:00");
+		long eventId = createTestEvent("Movie", List.of(ticketNumber), OffsetDateTime.now().plusDays(20));
 		String userId = UUID.randomUUID().toString();
 
 		var reserveResp = stub.reserveTicket(TicketActionRequest.newBuilder()
@@ -184,7 +185,7 @@ class TicketServiceApplicationTests {
 	@Test
 	void testFailureCancelAfterReserve() {
 		String ticketNumber = "C1";
-		long eventId = createTestEvent("Movie", List.of(ticketNumber), "2025-06-01T18:00:00");
+		long eventId = createTestEvent("Movie", List.of(ticketNumber), OffsetDateTime.now().plusDays(20));
 		String userId = UUID.randomUUID().toString();
 
 		var reserveResp = stub.reserveTicket(TicketActionRequest.newBuilder()
@@ -217,7 +218,7 @@ class TicketServiceApplicationTests {
 	@Test
 	void testReReservationAfterExpiration() {
 		String ticketNumber = "D1";
-		long eventId = createTestEvent("Seminar", List.of(ticketNumber), "2025-06-01T18:00:00");
+		long eventId = createTestEvent("Seminar", List.of(ticketNumber), OffsetDateTime.now().plusDays(20));
 		String userId1 = UUID.randomUUID().toString();
 		String userId2 = UUID.randomUUID().toString();
 
@@ -244,7 +245,7 @@ class TicketServiceApplicationTests {
 	@Test
 	void testReservationConflict() {
 		String ticketNumber = "E1";
-		long eventId = createTestEvent("Talk Show", List.of(ticketNumber), "2025-06-01T18:00:00");
+		long eventId = createTestEvent("Talk Show", List.of(ticketNumber), OffsetDateTime.now().plusDays(20));
 		String user1 = UUID.randomUUID().toString();
 		String user2 = UUID.randomUUID().toString();
 
@@ -265,10 +266,10 @@ class TicketServiceApplicationTests {
 				"INVALID_ARGUMENT: You don't own the ticket");
 	}
 
-	private long createTestEvent(String name, List<String> tickets, String dateTimeStr) {
+	private long createTestEvent(String name, List<String> tickets, OffsetDateTime dateTime) {
 		CreateEventRequest request = CreateEventRequest.newBuilder()
 				.setName(name)
-				.setDateTime(dateTimeStr)
+				.setDateTime(dateTime.toString())
 				.addAllTicketNumbers(tickets)
 				.build();
 
