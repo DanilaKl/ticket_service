@@ -1,8 +1,10 @@
 package hometask.ticket_service.configuration;
 
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-
+@Configuration
 @ConfigurationProperties(prefix = "app")
 public class AppConfiguration {
     private int confirmationTimeoutMinutes;
