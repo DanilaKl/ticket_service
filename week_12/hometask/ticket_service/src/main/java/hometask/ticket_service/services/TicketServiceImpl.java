@@ -4,6 +4,7 @@ import hometask.ticket_service.configuration.AppConfiguration;
 import hometask.ticket_service.jooq.tables.records.TicketsRecord;
 import hometask.ticket_service.repository.EventRepository;
 import hometask.ticket_service.repository.TicketRepository;
+import hometask.ticket_service.util.TimeConverter;
 import hometask.ticket_service.validators.EventValidator;
 import hometask.ticket_service.validators.TicketValidator;
 import hometask.ticketservice.TicketServiceGrpc;
@@ -18,11 +19,13 @@ import hometask.ticketservice.TicketServiceOuterClass.TicketActionRequest;
 import hometask.ticketservice.TicketServiceOuterClass.TicketActionResponse;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import org.jooq.Configuration;
+import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.grpc.server.service.GrpcService;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Iterator;
 import java.util.List;
 
@@ -33,19 +36,22 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
     private final TicketRepository ticketRepository;
     private final EventValidator eventValidator;
     private final TicketValidator ticketValidator;
-    private final long timeout;
+    private final DSLContext dslContext;
+    AppConfiguration config;
 
     @Autowired
     public TicketServiceImpl(AppConfiguration appConfiguration,
                              EventRepository eventRepository,
                              TicketRepository ticketRepository,
                              EventValidator eventValidator,
-                             TicketValidator ticketValidator) {
+                             TicketValidator ticketValidator,
+                             DSLContext dslContext) {
         this.eventRepository = eventRepository;
         this.ticketRepository = ticketRepository;
         this.eventValidator = eventValidator;
         this.ticketValidator = ticketValidator;
-        this.timeout = appConfiguration.getConfirmationTimeoutMinutes();
+        this.dslContext = dslContext;
+        this.config = appConfiguration;
     }
 
     @Override
@@ -58,24 +64,28 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
             return;
         }
 
-        long event_id = eventRepository.insertEvent(
-                request.getName(),
-                LocalDateTime.parse(request.getDateTime())
-        );
-        ticketRepository.insertTickets(request.getTicketNumbersList(), event_id);
+        dslContext.transaction((Configuration trx) -> {
+            long event_id = eventRepository.insertEvent(
+                    trx.dsl(),
+                    request.getName(),
+                    OffsetDateTime.parse(request.getDateTime())
+            );
+            ticketRepository.insertTickets(trx.dsl(), request.getTicketNumbersList(), event_id);
 
-        CreateEventResponse response = CreateEventResponse.newBuilder()
-                .setEventId(event_id)
-                .build();
+            CreateEventResponse response = CreateEventResponse.newBuilder()
+                    .setEventId(event_id)
+                    .build();
 
-        responseObserver.onNext(response);
+            responseObserver.onNext(response);
+        });
+
         responseObserver.onCompleted();
     }
 
     @Override
     public void getEvents(GetEventsRequest request,
                           StreamObserver<GetEventsResponse> responseObserver) {
-        var eventsRecords = eventRepository.getAllEvents();
+        var eventsRecords = eventRepository.getAllEvents(dslContext);
         Iterator<TicketServiceOuterClass.Event> eventsResponses = eventsRecords.stream()
                 .map(event -> TicketServiceOuterClass.Event.newBuilder()
                                         .setId(event.getId())
@@ -97,9 +107,9 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
                            StreamObserver<GetTicketsResponse> responseObserver) {
         List<TicketsRecord> ticketsRecords;
         if (request.getAvailableOnly()) {
-            ticketsRecords = ticketRepository.getEventTickets(request.getEventId(), false);
+            ticketsRecords = ticketRepository.getEventTickets(dslContext, request.getEventId(), false);
         } else {
-            ticketsRecords = ticketRepository.getAllEventTickets(request.getEventId());
+            ticketsRecords = ticketRepository.getAllEventTickets(dslContext, request.getEventId());
         }
 
         try {
@@ -118,8 +128,9 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
     }
 
     @Override
-    public void getUserTickets(TicketServiceOuterClass.GetUserTicketsRequest request, StreamObserver<GetTicketsResponse> responseObserver) {
-        List<TicketsRecord> ticketsRecords = ticketRepository.getUserTickets(request.getUserId());
+    public void getUserTickets(TicketServiceOuterClass.GetUserTicketsRequest request,
+                               StreamObserver<GetTicketsResponse> responseObserver) {
+        List<TicketsRecord> ticketsRecords = ticketRepository.getUserTickets(dslContext, request.getUserId());
 
         try {
             ticketValidator.validateTicketObjectNotNull(ticketsRecords);
@@ -139,7 +150,9 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
     @Override
     public void reserveTicket(TicketActionRequest request,
                               StreamObserver<TicketActionResponse> responseObserver) {
-        TicketsRecord ticketsRecord = ticketRepository.getTicket(request.getTicketNumber(), request.getEventId());
+        TicketsRecord ticketsRecord = ticketRepository.getTicket(
+                dslContext, request.getTicketNumber(), request.getEventId()
+        );
 
         try {
             ticketValidator.validateTicketReserve(ticketsRecord);
@@ -149,12 +162,13 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
         }
 
         String ticketNumber = ticketRepository.updateEventTicket(
+                dslContext,
                 request.getTicketNumber(),
                 request.getEventId(),
                 request.getUserId(),
                 true,
                 false,
-                LocalDateTime.now().plusMinutes(timeout)
+                OffsetDateTime.now().plusMinutes(config.getConfirmationTimeoutMinutes())
         );
 
         var response = TicketActionResponse.newBuilder().setTicketNumber(ticketNumber).build();
@@ -166,7 +180,9 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
     @Override
     public void confirmReservation(TicketActionRequest request,
                                    StreamObserver<TicketActionResponse> responseObserver) {
-        TicketsRecord ticketsRecord = ticketRepository.getTicket(request.getTicketNumber(), request.getEventId());
+        TicketsRecord ticketsRecord = ticketRepository.getTicket(
+                dslContext, request.getTicketNumber(), request.getEventId()
+        );
 
         try {
             ticketValidator.validateTicketConfirm(request, ticketsRecord);
@@ -176,6 +192,7 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
         }
 
         String ticketNumber = ticketRepository.updateUserTicket(
+                dslContext,
                 request.getTicketNumber(),
                 request.getEventId(),
                 request.getUserId(),
@@ -192,7 +209,9 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
     @Override
     public void cancelReservation(TicketActionRequest request,
                                   StreamObserver<TicketActionResponse> responseObserver) {
-        TicketsRecord ticketsRecord = ticketRepository.getTicket(request.getTicketNumber(), request.getEventId());
+        TicketsRecord ticketsRecord = ticketRepository.getTicket(
+                dslContext, request.getTicketNumber(), request.getEventId()
+        );
 
         try {
             ticketValidator.validateTicketCancel(request, ticketsRecord);
@@ -202,6 +221,7 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
         }
 
         String ticketNumber = ticketRepository.updateUserTicket(
+                dslContext,
                 request.getTicketNumber(),
                 request.getEventId(),
                 request.getUserId(),
@@ -239,7 +259,9 @@ public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
                         .setEventId(ticket.getEventId())
                         .setIsReserved(
                                 ticket.getIsReserved()
-                                && LocalDateTime.now().isBefore(ticket.getReservationDate())
+                                && OffsetDateTime.now().isBefore(
+                                        TimeConverter.fromInnerLocalDatetime(ticket.getReservationDate())
+                                )
                         )
                         .setIsConfirmed(ticket.getIsConfirmed())
                         .build()

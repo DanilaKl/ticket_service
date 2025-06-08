@@ -1,17 +1,14 @@
 package hometask.ticket_service.repository;
 
 import hometask.ticket_service.jooq.tables.records.TicketsRecord;
+import hometask.ticket_service.util.TimeConverter;
 import org.jooq.DSLContext;
 import org.jooq.Records;
-import org.jooq.SQLDialect;
-import org.jooq.conf.Settings;
-import org.jooq.impl.DSL;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
 
-import javax.sql.DataSource;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,27 +16,19 @@ import static hometask.ticket_service.jooq.tables.Tickets.TICKETS;
 
 @Repository
 public class TicketRepository {
-    private final DSLContext dslContext;
-
-    @Autowired
-    public TicketRepository(DataSource dataSource) {
-        this.dslContext = DSL.using(dataSource,
-                SQLDialect.POSTGRES,
-                new Settings().withExecuteWithOptimisticLocking(true));
-    }
-
-    public List<TicketsRecord> getAllEventTickets(Long eventId) {
+    public List<TicketsRecord> getAllEventTickets(DSLContext dslContext, long eventId) {
         return dslContext.selectFrom(TICKETS)
                 .where(TICKETS.EVENT_ID.eq(eventId))
                 .fetchInto(TicketsRecord.class);
     }
 
-    public List<TicketsRecord> getEventTickets(Long eventId, boolean isReserved) {
+    public List<TicketsRecord> getEventTickets(DSLContext dslContext, long eventId, boolean isReserved) {
+        LocalDateTime now = TimeConverter.toInnerLocalDatetime(OffsetDateTime.now());
         var reservationCondition = TICKETS.IS_RESERVED.eq(isReserved);
         if (!isReserved) {
-            reservationCondition.or(TICKETS.RESERVATION_DATE.lt(LocalDateTime.now()));
+            reservationCondition.or(TICKETS.RESERVATION_DATE.lt(now));
         } else {
-            reservationCondition.and(TICKETS.RESERVATION_DATE.ge(LocalDateTime.now()));
+            reservationCondition.and(TICKETS.RESERVATION_DATE.ge(now));
         }
 
         return dslContext.selectFrom(TICKETS)
@@ -47,19 +36,19 @@ public class TicketRepository {
                 .fetchInto(TicketsRecord.class);
     }
 
-    public List<TicketsRecord> getUserTickets(String user) {
+    public List<TicketsRecord> getUserTickets(DSLContext dslContext, String user) {
         return dslContext.selectFrom(TICKETS)
                 .where(TICKETS.USER_ID.eq(UUID.fromString(user)))
                 .fetchInto(TicketsRecord.class);
     }
 
-    public TicketsRecord getTicket(String ticketNumber, Long eventId) {
+    public TicketsRecord getTicket(DSLContext dslContext, String ticketNumber, long eventId) {
         return dslContext.selectFrom(TICKETS)
                 .where(TICKETS.NUMBER.eq(ticketNumber).and(TICKETS.EVENT_ID.eq(eventId)))
                 .fetchOne();
     }
 
-    public void insertTickets(List<String> ticketNumbers, Long eventId) {
+    public void insertTickets(DSLContext dslContext, List<String> ticketNumbers, long eventId) {
         var insertionStmnt = dslContext.insertInto(TICKETS, TICKETS.NUMBER, TICKETS.EVENT_ID);
         for (var ticketNumber : ticketNumbers) {
             insertionStmnt = insertionStmnt.values(ticketNumber, eventId);
@@ -67,8 +56,9 @@ public class TicketRepository {
         insertionStmnt.execute();
     }
 
-    public String updateEventTicket(String ticketNumber, Long eventId, String user,
-                                    Boolean isReserved, Boolean isConfirmed, LocalDateTime reservationTime) {
+    public String updateEventTicket(DSLContext dslContext,
+                                    String ticketNumber, long eventId, String user,
+                                    boolean isReserved, boolean isConfirmed, OffsetDateTime reservationTime) {
         TicketsRecord updateTicket = dslContext.fetchOne(TICKETS,
                 TICKETS.NUMBER.eq(ticketNumber).and(TICKETS.EVENT_ID.eq(eventId)));
 
@@ -77,7 +67,7 @@ public class TicketRepository {
                     .set(TICKETS.USER_ID, UUID.fromString(user))
                     .set(TICKETS.IS_RESERVED, isReserved)
                     .set(TICKETS.IS_CONFIRMED, isConfirmed)
-                    .set(TICKETS.RESERVATION_DATE, reservationTime)
+                    .set(TICKETS.RESERVATION_DATE, TimeConverter.toInnerLocalDatetime(reservationTime))
                     .set(TICKETS.VERSION, updateTicket.getVersion() + 1)
                     .where(TICKETS.NUMBER.eq(ticketNumber)
                             .and(TICKETS.EVENT_ID.eq(eventId))
@@ -95,8 +85,9 @@ public class TicketRepository {
         return null;
     }
 
-    public String updateUserTicket(String ticketNumber, Long eventId, String user,
-                                 Boolean isReserved, Boolean isConfirmed) {
+    public String updateUserTicket(DSLContext dslContext,
+                                String ticketNumber, Long eventId, String user,
+                                Boolean isReserved, Boolean isConfirmed) {
         TicketsRecord updateTicket = dslContext.fetchOne(TICKETS,
                 TICKETS.NUMBER.eq(ticketNumber)
                         .and(TICKETS.EVENT_ID.eq(eventId))

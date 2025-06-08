@@ -6,16 +6,15 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties
 @ConfigurationProperties(prefix = "app")
 public class AppConfiguration {
-    private long confirmationTimeoutMinutes;
+    private int confirmationTimeoutMinutes;
 
-    public long getConfirmationTimeoutMinutes() {
+    public int getConfirmationTimeoutMinutes() {
         return confirmationTimeoutMinutes;
     }
 
-    public void setConfirmationTimeoutMinutes(long confirmationTimeoutMinutes) {
+    public void setConfirmationTimeoutMinutes(int confirmationTimeoutMinutes) {
         this.confirmationTimeoutMinutes = confirmationTimeoutMinutes;
     }
 }

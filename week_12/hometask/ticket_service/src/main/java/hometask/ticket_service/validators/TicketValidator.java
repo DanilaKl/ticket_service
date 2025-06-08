@@ -1,10 +1,11 @@
 package hometask.ticket_service.validators;
 
 import hometask.ticket_service.jooq.tables.records.TicketsRecord;
+import hometask.ticket_service.util.TimeConverter;
 import hometask.ticketservice.TicketServiceOuterClass.TicketActionRequest;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Component
@@ -13,7 +14,11 @@ public class TicketValidator {
     public void validateTicketReserve(TicketsRecord ticketRecord) {
         validateTicketObjectNotNull(ticketRecord);
 
-        if (ticketRecord.getIsReserved() && LocalDateTime.now().isBefore(ticketRecord.getReservationDate())) {
+        if (ticketRecord.getIsReserved()
+                && OffsetDateTime.now().isBefore(
+                        TimeConverter.fromInnerLocalDatetime(ticketRecord.getReservationDate())
+                )
+        ) {
             throw new IllegalStateException("Ticket already reserved");
         }
     }

@@ -3,7 +3,7 @@ package hometask.ticket_service.validators;
 import hometask.ticketservice.TicketServiceOuterClass.CreateEventRequest;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,7 +14,7 @@ public class EventValidator {
             throw new IllegalStateException("Name could not be blank");
         }
 
-        if (LocalDateTime.parse(eventRequest.getDateTime()).isBefore(LocalDateTime.now())) {
+        if (OffsetDateTime.parse(eventRequest.getDateTime()).isBefore(OffsetDateTime.now())) {
             throw new IllegalStateException("Date could not be in past");
         }
 

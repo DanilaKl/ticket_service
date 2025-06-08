@@ -1,6 +1,7 @@
 package hometask.ticket_service;
 
 import hometask.ticket_service.configuration.AppConfiguration;
+import hometask.ticket_service.util.TimeConverter;
 import hometask.ticketservice.TicketServiceGrpc;
 import hometask.ticketservice.TicketServiceOuterClass.CreateEventRequest;
 import hometask.ticketservice.TicketServiceOuterClass.CreateEventResponse;
@@ -12,13 +13,7 @@ import hometask.ticketservice.TicketServiceOuterClass.TicketActionRequest;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
-import liquibase.Contexts;
-import liquibase.Liquibase;
-import liquibase.database.Database;
-import liquibase.database.DatabaseFactory;
-import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
-import liquibase.resource.ClassLoaderResourceAccessor;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,9 +27,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -78,19 +71,6 @@ class TicketServiceApplicationTests {
 				.build();
 
 		stub = TicketServiceGrpc.newBlockingStub(channel);
-
-		Connection connection = postgres.createConnection("");
-		Database database = DatabaseFactory.getInstance()
-				.findCorrectDatabaseImplementation(new JdbcConnection(connection));
-
-		Liquibase liquibase = new Liquibase(
-				"db/changelog/db.changelog-master.yaml",
-				new ClassLoaderResourceAccessor(),
-				database
-		);
-
-		liquibase.update(new Contexts());
-		connection.close();
 	}
 
 	@BeforeEach
@@ -104,7 +84,7 @@ class TicketServiceApplicationTests {
 		List<String> ticketNumbers = List.of("A1", "A2", "A3");
 		CreateEventRequest request = CreateEventRequest.newBuilder()
 				.setName("Concert")
-				.setDateTime("2025-06-01T20:00:00")
+				.setDateTime(OffsetDateTime.now().plusDays(20).toString())
 				.addAllTicketNumbers(ticketNumbers)
 				.build();
 
@@ -229,7 +209,9 @@ class TicketServiceApplicationTests {
 				.build());
 
 		dsl.update(TICKETS)
-				.set(TICKETS.RESERVATION_DATE, LocalDateTime.now().minusMinutes(1))
+				.set(TICKETS.RESERVATION_DATE,
+						TimeConverter.toInnerLocalDatetime(OffsetDateTime.now().minusMinutes(1))
+				)
 				.where(TICKETS.NUMBER.eq(ticketNumber))
 				.execute();
 
