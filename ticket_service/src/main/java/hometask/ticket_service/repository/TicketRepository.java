@@ -26,9 +26,9 @@ public class TicketRepository {
         LocalDateTime now = TimeConverter.toInnerLocalDatetime(OffsetDateTime.now());
         var reservationCondition = TICKETS.IS_RESERVED.eq(isReserved);
         if (!isReserved) {
-            reservationCondition.or(TICKETS.RESERVATION_DATE.lt(now));
+            reservationCondition = reservationCondition.or(TICKETS.RESERVATION_DATE.lt(now));
         } else {
-            reservationCondition.and(TICKETS.RESERVATION_DATE.ge(now));
+            reservationCondition = reservationCondition.and(TICKETS.RESERVATION_DATE.ge(now));
         }
 
         return dslContext.selectFrom(TICKETS)

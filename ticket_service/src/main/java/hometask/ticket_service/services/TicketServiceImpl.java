@@ -21,17 +21,21 @@ import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.grpc.server.service.GrpcService;
 
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 @GrpcService
 public class TicketServiceImpl extends TicketServiceGrpc.TicketServiceImplBase {
 
+    private static final Logger log = LoggerFactory.getLogger(TicketServiceImpl.class);
     private final EventRepository eventRepository;
     private final TicketRepository ticketRepository;
     private final EventValidator eventValidator;

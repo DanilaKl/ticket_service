@@ -199,7 +199,6 @@ import org.testcontainers.containers.PostgreSQLContainer
 	}
 
 	tasks.named("update") {
-		dependsOn startPostgresContainer
 		doFirst {
 			logger.info "[update] Using database URL: ${getDbUrl()}"
 		}

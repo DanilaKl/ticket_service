@@ -1,0 +1,51 @@
+# Сервис Билетов
+***
+
+Учебный проект. Представляет собой GRPC сервис для бронирования билетов на мероприятие.
+
+TODO: Добавить описания
+
+## Запуск проекта
+
+### Сборка 
+Проект использует специальные Gradle-таски для генерации jOOQ-моделей и применения миграций.
+***
+Testcontainers автоматически поднимет PostgreSQL в Docker, применит миграции и сгенерирует jOOQ-модели:
+```shell
+./gradlew build
+```
+### Запуск
+Контейнер с БД:
+```shell
+docker run --name tickets-db -e POSTGRES_USER=ticket_user -e POSTGRES_PASSWORD=ticket_password -e POSTGRES_DB=tickets -p 5432:5432 -d postgres:latest
+```
+Запуск приложения:
+```shell
+./gradlew bootRun
+```
+
+Приложения доступно на localhost:9090.
+
+### Запуск тестов
+
+```shell
+./gradlew test
+```
+Тесты используют Testcontainers, поэтому Docker обязателен.
+
+### gRPC контракты
+ 
+Файл ```.proto``` находится в:
+```
+src/main/proto
+```
+
+## Стэк технологий
+
+* Java 21
+* Фреймворк: **Spring Boot**
+* Система сборки: **Gradle**
+* База Данных: **Postgresql**
+* Миграции: **Liquibase**
+* Взаимодействие с БД: **JOOQ**
+* Тестирование и генерация кода для JOOQ: **Testcontainers**
