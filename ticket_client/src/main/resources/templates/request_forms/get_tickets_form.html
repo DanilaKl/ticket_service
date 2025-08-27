@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticket Service Client</title>
+</head>
+<body>
+<div th:fragment="request_form">
+  <form th:action="@{${apiVersion} + '/get-tickets-request/perform'}" class="white_border" method="post" th:object="${dto}">
+    <label>Event ID: <input type="number" th:field="*{eventId}"></label><br>
+    <label>Available only: <input type="checkbox" th:field="*{availableOnly}" value="true"></label><br>
+    <button type="submit">Send</button>
+  </form>
+</div>
+</body>
+</html>

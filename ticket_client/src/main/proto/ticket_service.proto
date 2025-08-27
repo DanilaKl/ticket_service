@@ -20,7 +20,9 @@ message CreateEventResponse {
     int64 event_id = 1;
 }
 
-message GetEventsRequest {}
+message GetEventsRequest {
+
+}
 
 message GetEventsResponse {
     repeated Event events = 1;

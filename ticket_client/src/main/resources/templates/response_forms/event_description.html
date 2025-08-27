@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Service Client</title>
+</head>
+<body>
+<div th:fragment="description" class="info-box">
+    <p th:text="'ID: ' + ${item.id}"></p>
+    <p th:text="'Event Name: ' + ${item.name}"></p>
+    <p th:text="'Event Date: ' + ${item.dateTime}"></p>
+</div>
+</body>
+</html>

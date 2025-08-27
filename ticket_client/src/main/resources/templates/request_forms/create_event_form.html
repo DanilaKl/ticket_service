@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticket Service Client</title>
+</head>
+<body>
+  <div th:fragment="request_form">
+    <h2>Входные данные:</h2>
+    <form th:action="@{${apiVersion} + '/create-event-request/perform'}" class="white_border" method="post" th:object="${dto}">
+      <label>Name: <input type="text" th:field="*{name}"></label><br>
+      <label>DateTime: <input type="text" th:field="*{dateTime}" placeholder="DD.MM.YYYY, HH:MM"></label><br>
+      <label>Ticket Numbers (comma separated): <input type="text" th:field="*{tickets}"></label><br>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+</body>
+</html>
