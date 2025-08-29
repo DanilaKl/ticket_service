@@ -6,9 +6,10 @@
 </head>
 <body>
 <div th:fragment="request_form">
+  <h2>Входные данные:</h2>
   <form th:action="@{${apiVersion} + '/get-tickets-request/perform'}" class="white_border" method="post" th:object="${dto}">
-    <label>Event ID: <input type="number" th:field="*{eventId}"></label><br>
-    <label>Available only: <input type="checkbox" th:field="*{availableOnly}" value="true"></label><br>
+    <label th:for="eventId">Event ID:</label><input type="number" th:field="*{eventId}" />
+    <label th:for="availableOnly">Available only: </label><input type="checkbox" th:field="*{availableOnly}" value="true" />
     <button type="submit">Send</button>
   </form>
 </div>

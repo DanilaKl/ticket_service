@@ -97,12 +97,6 @@ public class TicketClientController {
                 "response_forms/ticket_description",
                 tickets
         );
-        System.out.println(
-            tickets.stream().map(TicketServiceOuterClass.Ticket::getIsReserved).toList().toString()
-        );
-        System.out.println(
-                tickets.stream().map(TicketServiceOuterClass.Ticket::getIsConfirmed).toList().toString()
-        );
 
         return "home";
     }

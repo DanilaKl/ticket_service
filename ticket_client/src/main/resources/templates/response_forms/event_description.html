@@ -5,10 +5,10 @@
     <title>Ticket Service Client</title>
 </head>
 <body>
-<div th:fragment="description" class="info-box">
-    <p th:text="'ID: ' + ${item.id}"></p>
-    <p th:text="'Event Name: ' + ${item.name}"></p>
-    <p th:text="'Event Date: ' + ${item.dateTime}"></p>
+<div th:fragment="description">
+    <div th:text="'ID: ' + ${item.id}"></div>
+    <div th:text="'Event Name: ' + ${item.name}"></div>
+    <div th:text="'Event Date: ' + ${item.dateTime}"></div>
 </div>
 </body>
 </html>

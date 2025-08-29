@@ -6,9 +6,9 @@
 </head>
 <body>
 <div th:fragment="response_form">
-  <h2>Выходные данные:</h2>
-  <div class="white_border">
-    <div th:each="item : ${items}">
+  <h2>Выходные данные :</h2>
+  <div class="response_data">
+    <div th:each="item : ${items}" class="response_item">
       <div th:replace="~{${item_description} :: description}"></div>
     </div>
   </div>

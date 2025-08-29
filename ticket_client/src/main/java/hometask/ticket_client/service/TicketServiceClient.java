@@ -38,7 +38,6 @@ public class TicketServiceClient {
     }
 
     public List<TicketServiceOuterClass.Ticket> getEventTickets(long eventId, boolean availableOnly) {
-        System.out.println(availableOnly);
         TicketServiceOuterClass.GetTicketsRequest request = TicketServiceOuterClass.GetTicketsRequest
                 .newBuilder()
                 .setEventId(eventId)

@@ -6,8 +6,9 @@
 </head>
 <body>
 <div th:fragment="request_form">
+  <h2>Входные данные:</h2>
   <form th:action="@{${apiVersion} + '/get-user-tickets-request/perform'}" class="white_border" method="post" th:object="${dto}">
-    <label>User ID: <input type="text" th:field="*{userId}"></label><br>
+    <label th:for="userId">User ID:</label><input type="text" th:field="*{userId}">
     <button type="submit">Send</button>
   </form>
 </div>

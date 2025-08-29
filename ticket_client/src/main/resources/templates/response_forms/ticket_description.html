@@ -5,10 +5,10 @@
   <title>Ticket Service Client</title>
 </head>
 <body>
-<div th:fragment="description" class="info-box">
-  <p th:text="'Event ID: ' + ${item.eventId}"></p>
-  <p th:text="'Ticket Number: ' + ${item.number}"></p>
-  <p th:text="'Status: ' + (${item.isReserved} ? (${item.isConfirmed} ? 'Confirmed' : 'Reserved') : 'Available')"></p>
+<div th:fragment="description">
+  <div th:text="'Event ID: ' + ${item.eventId}"></div>
+  <div th:text="'Ticket Number: ' + ${item.number}"></div>
+  <div th:text="'Status: ' + (${item.isReserved} ? (${item.isConfirmed} ? 'Confirmed' : 'Reserved') : 'Available')"></div>
 </div>
 </body>
 </html>
