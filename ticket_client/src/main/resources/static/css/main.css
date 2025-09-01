@@ -80,7 +80,7 @@ textarea {
   resize: none;
 }
 
-input, textarea {
+input, textarea, select {
     background: #341c67;
     color: #e1e3e2;
 
@@ -96,7 +96,8 @@ input[type="checkbox"] {
 }
 
 input:focus,
-textarea:focus {
+textarea:focus,
+select:focus {
   outline: none;
   border-color: #cca4b4;
   box-shadow: 0 0 8px rgba(220, 206, 64, 0.6);
@@ -145,6 +146,12 @@ button:active {
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.form-select {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 /* Блок вывода данных */

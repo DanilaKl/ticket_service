@@ -6,8 +6,19 @@
 </head>
 <body>
 <div th:fragment="request_form">
-  <form th:action="@{${apiVersion} + '/ticket-' + ${action} + '-request/perform'}" class="white_border" method="post" th:object="${dto}">
-    <label th:for="userId">User ID:</label><input type="text" th:field="*{userId}" />
+  <form th:action="@{${apiVersion} + '/ticket-' + ${action} + '-request/perform'}" method="post" th:object="${dto}">
+    <label th:for="userId">User ID:</label>
+    <div class="form-select">
+      <select onchange="this.nextElementSibling.value=this.value">
+        <option value="">---</option>
+        <option th:if="${users} != null and not ${#lists.isEmpty(users)}"
+                th:each="user : ${users}"
+                th:value="${user}"
+                th:text="${user}">
+        </option>
+      </select>
+      <input type="text" th:field="*{userId}">
+    </div>
     <label th:for="eventId">Event ID:</label><input type="number" th:field="*{eventId}" />
     <label th:for="ticketNumber">Ticket Number:</label><input type="text" th:field="*{ticketNumber}" />
     <button type="submit">Send</button>

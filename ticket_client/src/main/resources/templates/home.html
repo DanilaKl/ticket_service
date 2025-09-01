@@ -12,5 +12,6 @@
         <div th:replace="~{(${request_form_template} == null ? 'empty_form' :  ${request_form_template}) :: request_form}"></div>
         <div id="data-area" th:replace="~{(${response_form_template} == null ? 'empty_form' : ${response_form_template}) :: response_form}"></div>
     </main>
+    <script type="text/javascript" th:src="@{/js/data_generation.js}"></script>
 </body>
 </html>

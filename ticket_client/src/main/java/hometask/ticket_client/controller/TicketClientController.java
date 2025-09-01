@@ -7,7 +7,9 @@ import hometask.ticket_client.dto.TicketFormDto;
 import hometask.ticket_client.dto.UserTicketFormDto;
 import hometask.ticket_client.service.TemplateFillerService;
 import hometask.ticket_client.service.TicketServiceClient;
-import hometask.ticketservice.TicketServiceOuterClass;
+import hometask.ticket_client.service.UserService;
+import io.grpc.StatusRuntimeException;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,8 +21,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 @Controller
 @ControllerAdvice
@@ -32,12 +32,14 @@ public class TicketClientController {
 
     private final TicketServiceClient ticketServiceClient;
     private final TemplateFillerService templateFillerService;
+    private final UserService userService;
 
     public  TicketClientController(
-            TicketServiceClient ticketServiceClient, TemplateFillerService templateFillerService
+            TicketServiceClient ticketServiceClient, TemplateFillerService templateFillerService, UserService userService
     ) {
         this.ticketServiceClient = ticketServiceClient;
         this.templateFillerService = templateFillerService;
+        this.userService = userService;
     }
 
     @GetMapping("home")
@@ -66,17 +68,21 @@ public class TicketClientController {
 
     @PostMapping("create-event-request/perform")
     public String createEvent(Model model, @ModelAttribute("dto") EventFormDto eventForm) {
-        var tickets = Arrays.asList(eventForm.getTickets().split(", "));
-        long eventId = ticketServiceClient.createEvent(
-                eventForm.getName(),
-                eventForm.getDateTime(),
-                tickets
-        );
+        try {
+            var tickets = Arrays.asList(eventForm.getTickets().split(", "));
+            long eventId = ticketServiceClient.createEvent(
+                    eventForm.getName(),
+                    eventForm.getDateTime(),
+                    tickets
+            );
+            templateFillerService.insertSingleItemResponse(
+                    model,
+                    "response_forms/id_description",
+                    eventId);
+        } catch (StatusRuntimeException e) {
+            handleGrpcExceptions(model, e);
+        }
         templateFillerService.insertForm(model, "request_forms/create_event_form", eventForm);
-        templateFillerService.insertSingleItemResponse(
-                model,
-                "response_forms/id_description",
-                eventId);
 
         return "home";
     }
@@ -90,48 +96,64 @@ public class TicketClientController {
 
     @PostMapping("get-tickets-request/perform")
     public String getTickets(Model model, @ModelAttribute("dto") TicketFormDto ticketForm) {
-        var tickets = ticketServiceClient.getEventTickets(ticketForm.getEventId(), ticketForm.isAvailableOnly());
+        try {
+            var tickets = ticketServiceClient.getEventTickets(ticketForm.getEventId(), ticketForm.isAvailableOnly());
+            templateFillerService.insertListOfItemsResponse(
+                    model,
+                    "response_forms/ticket_description",
+                    tickets
+            );
+        } catch (StatusRuntimeException e) {
+            handleGrpcExceptions(model, e);
+        }
         templateFillerService.insertForm(model, "request_forms/get_tickets_form", ticketForm);
-        templateFillerService.insertListOfItemsResponse(
-                model,
-                "response_forms/ticket_description",
-                tickets
-        );
 
         return "home";
     }
 
     @GetMapping("get-user-tickets-request")
-    public String getUserTicketsForm(Model model) {
+    public String getUserTicketsForm(HttpSession session, Model model) {
         templateFillerService.insertForm(
                 model,
                 "request_forms/get_user_tickets_form",
                 new UserTicketFormDto()
         );
+        model.addAttribute("users", userService.getUsers(session));
 
         return "home";
     }
 
     @PostMapping("get-user-tickets-request/perform")
-    public String getUserTickets(Model model, @ModelAttribute("dto") UserTicketFormDto userTicketForm) {
-        var tickets = ticketServiceClient.getUserTickets(userTicketForm.getUserId());
+    public String getUserTickets(
+            HttpSession session, Model model,
+            @ModelAttribute("dto") UserTicketFormDto userTicketForm
+    ) {
+        try {
+            var tickets = ticketServiceClient.getUserTickets(userTicketForm.getUserId());
+            templateFillerService.insertListOfItemsResponse(
+                    model,
+                    "response_forms/ticket_description",
+                    tickets
+            );
+            userService.addUser(session, userTicketForm.getUserId());
+        } catch (StatusRuntimeException e) {
+            handleGrpcExceptions(model, e);
+        }
         templateFillerService.insertForm(model, "request_forms/get_user_tickets_form", userTicketForm);
-        templateFillerService.insertListOfItemsResponse(
-                model,
-                "response_forms/ticket_description",
-                tickets
-        );
+        model.addAttribute("users", userService.getUsers(session));
+
 
         return "home";
     }
 
     @GetMapping("ticket-{action}-request")
-    public String makeTicketActionForm(Model model,  @PathVariable String action) {
+    public String makeTicketActionForm(HttpSession session, Model model,  @PathVariable String action) {
         templateFillerService.insertForm(
                 model,
                 "request_forms/ticket_action_form",
                 new TicketActionFormDto()
         );
+        model.addAttribute("users", userService.getUsers(session));
         model.addAttribute("action", action);
 
         return "home";
@@ -139,20 +161,27 @@ public class TicketClientController {
 
     @PostMapping("ticket-{action}-request/perform")
     public String makeTicketAction(
-            Model model, @PathVariable String action, @ModelAttribute("dto") TicketActionFormDto ticketActionForm
+            HttpSession session, Model model, @PathVariable String action,
+            @ModelAttribute("dto") TicketActionFormDto ticketActionForm
     ) {
-        String ticketNumber = performTicketAction(action, ticketActionForm);
+        try {
+            String ticketNumber = performTicketAction(action, ticketActionForm);
+            templateFillerService.insertSingleItemResponse(
+                    model,
+                    "response_forms/id_description",
+                    ticketNumber
+            );
+            userService.addUser(session, ticketActionForm.getUserId());
+        } catch (StatusRuntimeException e) {
+            handleGrpcExceptions(model, e);
+        }
         templateFillerService.insertForm(
                 model,
                 "request_forms/ticket_action_form",
                 ticketActionForm
         );
+        model.addAttribute("users", userService.getUsers(session));
         model.addAttribute("action", action);
-        templateFillerService.insertSingleItemResponse(
-                model,
-                "response_forms/id_description",
-                ticketNumber
-        );
 
         return "home";
     }
@@ -177,5 +206,13 @@ public class TicketClientController {
             );
             default -> "";
         };
+    }
+
+    private void handleGrpcExceptions(Model model, Exception exception) {
+        templateFillerService.insertSingleItemResponse(
+                model,
+                "response_forms/error_description",
+                exception.getMessage()
+        );
     }
 }

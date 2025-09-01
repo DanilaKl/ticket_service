@@ -7,10 +7,11 @@
 <body>
   <div th:fragment="request_form">
     <h2>Входные данные:</h2>
-    <form th:action="@{${apiVersion} + '/create-event-request/perform'}" class="white_border" method="post" th:object="${dto}">
+    <form th:action="@{${apiVersion} + '/create-event-request/perform'}" method="post" th:object="${dto}">
       <label th:for="name">Name:</label><input type="text" th:field="*{name}" />
       <label th:for="dateTime">DateTime: </label><input type="text" th:field="*{dateTime}" placeholder="DD.MM.YYYY, HH:MM" />
       <label th:for="tickets">Ticket Numbers (comma separated): </label><textarea th:field="*{tickets}"></textarea>
+      <button type="button" class="generate-btn" data-type="event">Generate</button>
       <button type="submit">Send</button>
     </form>
   </div>
