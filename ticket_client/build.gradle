@@ -1,0 +1,60 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.4'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.google.protobuf' version '0.9.4'
+}
+
+group = 'hometask'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.grpc:spring-grpc-spring-boot-starter:0.8.0'
+
+    implementation 'io.grpc:grpc-netty'
+    implementation 'io.grpc:grpc-protobuf'
+    implementation 'io.grpc:grpc-stub'
+
+    implementation 'jakarta.annotation:jakarta.annotation-api'
+
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.25.1'
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.62.2'
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {
+                option 'jakarta_omit'
+                option '@generated=omit'
+            }
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}

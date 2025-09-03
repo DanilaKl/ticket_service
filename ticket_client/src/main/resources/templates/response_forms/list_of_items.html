@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticket Service Client</title>
+</head>
+<body>
+<div th:fragment="response_form">
+  <h2>Выходные данные :</h2>
+  <div class="response_data">
+    <div th:each="item : ${items}" class="response_item" th:unless="${#lists.isEmpty(items)}">
+      <div th:replace="~{${item_description} :: description}"></div>
+    </div>
+    <p class="empty_response" th:if="${#lists.isEmpty(items)}">NO DATA</p>
+  </div>
+</div>
+</body>
+</html>

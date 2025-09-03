@@ -1,0 +1,191 @@
+body {
+    background-color: #121212;
+    color: #e1e3e2;
+    font-family: "Segoe UI", Roboto, sans-serif;
+    font-size: 20px;
+}
+
+/* боковая панель */
+
+.sidebar {
+    background-color: #472f5b;
+
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: 300px;
+
+    border: 3px solid #e1e3e2;
+    border-radius: 8px;
+
+    text-align: left;
+}
+
+.sidebar h2 {
+    color: #e1e3e2;
+
+    margin: 15px 0px 15px 0px;
+
+    display: block;
+    text-align: center;
+}
+
+.sidebar a {
+    color: #e1e3e2;
+    text-decoration: none;
+
+    margin: 10px 0px 10px 0px;
+    padding-left: 10px;
+
+    display: block;
+}
+
+.sidebar a:hover {
+    color: #b8a5d2;
+}
+
+/* Основной блок */
+
+main {
+    margin-left: 320px;
+    margin-right: 320px;
+}
+
+h1 {
+    text-align: center;
+}
+
+button {
+    background-color: #9501a8;
+    color: #e0e0e0;
+
+    border: none;
+    border-radius: 8px;
+
+    cursor: pointer;
+    font-family: "Segoe UI", Roboto, sans-serif;
+    font-size: 1em;
+
+    padding: 10px 25px 10px 25px;
+}
+
+button:hover {
+  background-color: #7454ac;
+  box-shadow: 0 4px 4px rgba(50, 0, 50, 0.4);
+  transform: translateY(-2px);
+}
+
+button:active {
+  background-color: #7a1dd8;
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Формы */
+
+form {
+    background-color: #472f5b;
+    color: #e1e3e2;
+
+    border: 3px solid #e1e3e2;
+    border-radius: 8px;
+
+    display: grid;
+    grid-template-columns: 30% 70%;
+    justify-items: stretch;
+    justify-content: stretch;
+}
+
+label {
+    justify-self: end;
+    margin: 5px;
+}
+
+input, textarea, select {
+    background: #341c67;
+    color: #e1e3e2;
+
+    border: 1px solid #121212;
+    border-radius: 5px;
+
+    padding: 3px 3px 3px 10px;
+    margin: 5px 5px 5px 10px;
+
+    justify-self: stretch;
+
+    display: block;
+}
+
+textarea {
+  resize: none;
+}
+
+input::placeholder {
+    color: #e1e3e2;
+}
+
+input[type="checkbox"] {
+    justify-self: start;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #cca4b4;
+    box-shadow: 0 0 8px rgba(220, 206, 64, 0.6);
+}
+
+input[type="checkbox"]:focus {
+    box-shadow: none;
+}
+
+.generate-btn {
+    margin: 5px;
+
+    grid-column: span 2;
+
+    justify-self: end;
+}
+
+button[type="submit"] {
+    margin: 10px;
+
+    grid-column: span 2;
+
+    justify-self: center;
+}
+
+/* Блок вывода данных */
+
+.response_data {
+    background-color: #472f5b;
+
+    border: 3px solid #e1e3e2;
+    border-radius: 8px;
+}
+
+.response_item {
+    background-color: #cca4b4;
+    color: #341c67;
+
+    border-radius: 8px;
+
+    margin: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    padding: 3px;
+}
+
+.empty_response {
+    font-size: 1em;
+    text-align: center;
+}
+
+/* https://www.figma.com/color-palettes/amethyst-twilight-whisper/ */
+
+/* https://www.figma.com/color-palettes/amethyst-dawn-haze/ */

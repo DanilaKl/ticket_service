@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Service Client</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+    <aside th:replace="~{actions_sidebar :: actions_sidebar}"></aside>
+    <main>
+        <h1>Ticket Service Client</h1>
+        <div th:replace="~{(${request_form_template} == null ? 'empty_form' :  ${request_form_template}) :: request_form}"></div>
+        <div id="data-area" th:replace="~{(${response_form_template} == null ? 'empty_form' : ${response_form_template}) :: response_form}"></div>
+    </main>
+    <script type="text/javascript" th:src="@{/js/data_generation.js}"></script>
+</body>
+</html>
