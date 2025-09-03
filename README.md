@@ -13,7 +13,8 @@
 - Подтверждение или отмена брони.
 - Повторное бронирование после истечения времени.
 
-Реализован на Spring Boot с использованием gRPC и JOOQ/JDBI, покрыт интеграционными тестами на базе Testcontainers.
+Реализован на Spring Boot с использованием gRPC и JOOQ/JDBI, покрыт интеграционными тестами на базе Testcontainers. 
+Для удобства, был добавлен клиент, содержащий формы под все запросы 
 
 ## Запуск проекта
 
@@ -31,7 +32,8 @@ docker run --name tickets-db -e POSTGRES_USER=ticket_user -e POSTGRES_PASSWORD=t
 ```
 Запуск приложения:
 ```shell
-./gradlew bootRun
+./gradlew :ticket_client:bootRun
+./gradlew :ticket_service:bootRun
 ```
 
 Приложения доступно на localhost:9090.

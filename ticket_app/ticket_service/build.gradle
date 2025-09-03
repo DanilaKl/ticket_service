@@ -113,7 +113,7 @@ liquibase {
 	activities {
 		register("dbCreds") {
 			changelogFile "db/changelog/db.changelog-master.yaml"
-			searchPath "src/main/resources/"
+			searchPath "${project.projectDir}/src/main/resources/"
 			url getDbUrl()
 			username dbUser
 			password dbPassword
