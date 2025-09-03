@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticket Service Client</title>
+</head>
+<body>
+<div th:fragment="description">
+  <div th:text="'Event ID: ' + ${item.eventId}"></div>
+  <div th:text="'Ticket Number: ' + ${item.number}"></div>
+  <div th:text="'Status: ' + (${item.isReserved} ? (${item.isConfirmed} ? 'Confirmed' : 'Reserved') : 'Available')"></div>
+</div>
+</body>
+</html>

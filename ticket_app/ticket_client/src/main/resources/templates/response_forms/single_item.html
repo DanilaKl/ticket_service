@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Service Client</title>
+</head>
+<body>
+<div th:fragment="response_form">
+    <h2>Выходные данные:</h2>
+    <div class="response_data">
+        <div th:replace="~{${item_description} :: description}"></div>
+    </div>
+</div>
+</body>
+</html>

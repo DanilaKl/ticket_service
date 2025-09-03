@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: "d.klimkin"
+      changes:
+        - createTable:
+            tableName: events
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: starts_at
+                  type: TIMESTAMP
+
+        - createTable:
+            tableName: tickets
+            columns:
+              - column:
+                  name: number
+                  type: VARCHAR(16)
+              - column:
+                  name: event_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: event_id_fk
+                    referencedTableName: events
+                    referencedColumnNames: id
+              - column:
+                  name: is_reserved
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+              - column:
+                  name: is_confirmed
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+              - column:
+                  name: user_id
+                  type: UUID
+              - column:
+                  name: reservation_date
+                  type: TIMESTAMP
+      rollback:
+        - dropTable:
+            tableName: events
+        - dropTable:
+            tableName: tickets
