@@ -9,7 +9,7 @@
   <h2>Входные данные:</h2>
   <form th:action="@{${apiVersion} + '/get-user-tickets-request/perform'}" method="post" th:object="${dto}">
     <label th:for="userId">User ID:</label>
-    <div class="form-select">
+    <div>
       <select onchange="this.nextElementSibling.value=this.value">
         <option value="">---</option>
         <option th:if="${users} != null and not ${#lists.isEmpty(users)}"
@@ -18,9 +18,9 @@
                 th:text="${user}">
         </option>
       </select>
-      <input type="text" th:field="*{userId}">
+      <input type="text" th:field="*{userId}" required />
     </div>
-    <button type="button" class="generate-btn" data-type="user">Generate</button>
+    <button type="button" class="generate-btn" data-type="user">Generate Data</button>
     <button type="submit">Send</button>
   </form>
 </div>

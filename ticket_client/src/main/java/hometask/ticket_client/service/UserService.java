@@ -1,8 +1,6 @@
 package hometask.ticket_client.service;
 
 import jakarta.servlet.http.HttpSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -12,7 +10,6 @@ import java.util.UUID;
 @Service
 public class UserService {
     private static final String USERS_SESSION_KEY = "users";
-    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     public void addUser(HttpSession session, UUID user) {
         List<UUID> users = getSessionUsers(session);
@@ -27,7 +24,6 @@ public class UserService {
     }
 
     private List<UUID> getSessionUsers(HttpSession session) {
-        log.info("get user from session: {}", session.getId());
         List<UUID> users = (List<UUID>) session.getAttribute(USERS_SESSION_KEY);
         if (users == null) {
             users = new ArrayList<>();
