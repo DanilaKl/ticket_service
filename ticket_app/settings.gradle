@@ -1,0 +1,4 @@
+rootProject.name = 'ticket_app'
+
+include 'ticket_client'
+include 'ticket_service'
